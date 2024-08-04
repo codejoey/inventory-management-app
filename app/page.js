@@ -1,95 +1,88 @@
+"use client";
+// make client-side app for simplicity sake
 import Image from "next/image";
-import styles from "./page.module.css";
+import { useState, useEffect } from "react";
+import { firestore } from "@/firebase";
+import { Box, Modal, Typography } from "@mui/material";
+import { collection, getDocs, query } from 'firebase/firestore'
+
 
 export default function Home() {
+  //state variable to store inventory, modal, and to store item names
+  //using [a, b] iterable destructuring assignment instead of object destructuring {a,b}
+  const [inventory, setInventory] = useState([])
+  const [open, setOpen] = useState(false) //set default value as false
+  const [itemName, setItemName] = useState('') //set empty str as default value
+
+  //add helper functions
+  const updateInventory = async () => { //? arrow function?
+    const snapshot = query(collection(firestore, 'inventory-mgmt-collection')) //get inventory snapshot from firestore
+    const docs = await getDocs(snapshot) //get docs from firestore
+    const inventoryList = []
+    docs.forEach((doc) => { //for every element in docs, add the name and data to inventory list
+      inventoryList.push({
+        name: doc.id,
+        ...doc.data(), //* 3 dots is the "spread syntax" The spread (...) syntax allows an iterable, such as an array or string, to be expanded in places where zero or more arguments (for function calls) or elements (for array literals) are expected. In an object literal, the spread syntax enumerates the properties of an object and adds the key-value pairs to the object being created. https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax
+      })
+    })
+    setInventory(inventoryList)
+
+  }
+  //helper function to delete item
+  const removeItem = async (item) =>{
+    const docRef = doc(collection(firestore, 'inventory-mgmt-collection'), item)
+    const docSnap = await getDoc(docRef)
+
+    if (docSnap.exists()){
+      const {quantity} = docSnap.data()
+      if (quantity === 1) { //then delete it
+        await deleteDoc(docRef)
+      }
+      else { //?else, do nothing - set docRef = quantity - 1
+        await setDoc(docRef, {quantity: quantity - 1})
+      }
+    }
+
+    await updateInventory()
+  }
+
+  //helper function to add item
+  const addItem = async (item) =>{
+    const docRef = doc(collection(firestore, 'inventory-mgmt-collection'), item)
+    const docSnap = await getDoc(docRef)
+
+    if (docSnap.exists()){ //then add one
+      const {quantity} = docSnap.data()
+      await setDoc(docRef, {quantity: quantity + 1})
+    } 
+    else { //doesn't exist, then set to 1
+      await setDoc(docRef, {quantity: 1}) 
+    }
+
+    await updateInventory()
+  }
+
+  useEffect(() => { //run once when page loads - only update then
+    updateInventory()
+  }, []
+)
+
+  //modal helper functions
+  const handleOpen = () => setOpen(true)
+  const handleClose = () => setClose(false)
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>app/page.js</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
+    <
+      Box
+      width='100vw' 
+      height='100vh' 
+      display='flex' 
+      justifyContent='center'
+      alignItems='center'
+      gap={2}
+    > 
+      <Typography variant="h1">Inventory Management</Typography>
 
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+    </Box>
   );
 }
