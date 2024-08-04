@@ -17,6 +17,17 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
+//for local test
+// const firebaseConfig = {
+//   apiKey: "AIzaSyCpmpMWWKzgaxyKDshRXeYBH0dTlBfonq8",
+//   authDomain: "inventory-management-pro-6116c.firebaseapp.com",
+//   projectId: "inventory-management-pro-6116c",
+//   storageBucket: "inventory-management-pro-6116c.appspot.com",
+//   messagingSenderId: "158727482593",
+//   appId: "1:158727482593:web:ea94ddd144cd289271dba0",
+//   measurementId: "G-T9RDKLVRBZ"
+// };
+
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
